@@ -41,3 +41,11 @@ func (sms SMS) GetTime() time.Time {
 	nanoseconds := int64((sms.Date % 1000) * 1000000)
 	return time.Unix(seconds, nanoseconds).In(CENTRAL_LOCATION)
 }
+
+func (sms SMS) GetContentType() int {
+	return CONTENT_TEXT
+}
+
+func (sms SMS) GetText() string {
+	return sms.Body
+}

@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/wcharczuk/go-chart"
+	"github.com/wcharczuk/go-chart/drawing"
 
 	"github.com/pglass/sms-backup/analyze"
 	"github.com/pglass/sms-backup/parse"
@@ -23,8 +25,8 @@ type RenderableChart interface {
 }
 
 const (
-	CHART_HEIGHT = 540
-	CHART_WIDTH  = 1920
+	CHART_HEIGHT = 750
+	CHART_WIDTH  = 960
 	CHART_DPI    = 110.0
 )
 
@@ -100,6 +102,37 @@ func MakeChart(doc parse.Document, chartType string) {
 				MakeTimeSeries(analyzer.OutgoingMessagesPerDay, "Outgoing Messages per day"),
 			},
 		)
+	case "incomingMessageLengths":
+		plot = GetHistogramChart(analyzer.IncomingMessageLengths, "Incoming Message Lengths")
+	case "outgoingMessageLengths":
+		plot = GetHistogramChart(analyzer.OutgoingMessageLengths, "Outgoing Message Lengths")
+	case "messagesTimeOfDay":
+		c := GetTimeSeriesChart(
+			[]chart.TimeSeries{
+				MakeTimeSeriesScatter(analyzer.MessagesTimeOfDay, "Messages plotted by hour of day"),
+			},
+		)
+		c.YAxis = chart.YAxis{
+			Style: chart.Style{
+				Show: true,
+			},
+			Ticks: []chart.Tick{
+				{0.0, "12:00am"},
+				{2.0, "2:00am"},
+				{4.0, "4:00am"},
+				{6.0, "6:00am"},
+				{8.0, "8:00am"},
+				{10.0, "10:00am"},
+				{12.0, "12:00pm"},
+				{14.0, "2:00pm"},
+				{16.0, "4:00pm"},
+				{18.0, "6:00pm"},
+				{20.0, "8:00pm"},
+				{22.0, "10:00pm"},
+				{24.0, "12:00am"},
+			},
+		}
+		plot = c
 	default:
 		log.Fatalf("Unsupported chart type: %v", chartType)
 	}
@@ -107,23 +140,28 @@ func MakeChart(doc parse.Document, chartType string) {
 	RenderPlot(plot, OUTFILE)
 }
 
-func ConfigureChart(plot *chart.Chart) {
-	plot.Height = 540
-	plot.Width = 1920
-	plot.DPI = 110.0
-	plot.Elements = []chart.Renderable{chart.Legend(plot)}
-}
-
-func ConfigureBarChart(plot *chart.Chart) {
-	plot.Height = 540
-	plot.Width = 1920
-	plot.DPI = 110.0
-	plot.Elements = []chart.Renderable{chart.Legend(plot)}
-}
-
 func MakeTimeSeries(m map[time.Time]float64, name string) chart.TimeSeries {
 	keys, values := analyze.SplitMapSorted(m)
 	return chart.TimeSeries{Name: name, XValues: keys, YValues: values}
+}
+
+func MakeTimeSeriesScatter(m map[time.Time]float64, name string) chart.TimeSeries {
+	viridisByY := func(xr, yr chart.Range, index int, x, y float64) drawing.Color {
+		return chart.Viridis(y, yr.GetMin(), yr.GetMax())
+	}
+
+	keys, values := analyze.SplitMapSorted(m)
+	return chart.TimeSeries{
+		Name:    name,
+		XValues: keys,
+		YValues: values,
+		Style: chart.Style{
+			Show:             true,
+			StrokeWidth:      chart.Disabled,
+			DotWidth:         5,
+			DotColorProvider: viridisByY,
+		},
+	}
 }
 
 func GetTimeSeriesChart(time_series []chart.TimeSeries) chart.Chart {
@@ -141,6 +179,30 @@ func GetTimeSeriesChart(time_series []chart.TimeSeries) chart.Chart {
 		DPI:    CHART_DPI,
 	}
 	result.Elements = []chart.Renderable{chart.Legend(&result)}
+	return result
+}
+
+func GetHistogramChart(histogram analyze.Histogram, title string) chart.BarChart {
+	data := histogram.GetMap()
+
+	keys, vals := analyze.SplitMapSortedInt64(data)
+
+	chart_vals := []chart.Value{}
+	for i, k := range keys {
+		chart_vals = append(chart_vals, chart.Value{Value: vals[i], Label: fmt.Sprintf("%v", k)})
+	}
+	result := chart.BarChart{
+		Title:      title,
+		TitleStyle: chart.StyleShow(),
+		XAxis:      chart.Style{Show: true},
+		YAxis:      Y_AXIS,
+		Bars:       chart_vals,
+
+		Height: CHART_HEIGHT,
+		Width:  CHART_WIDTH,
+		DPI:    CHART_DPI,
+	}
+	// result.Elements = []chart.Renderable{chart.Legend(&result)}
 	return result
 }
 

@@ -1,17 +1,23 @@
-hash: 7512a104e1f3627757b6d479812f71d900c7e5c04c5c0eeb0f8fecb24c1805b0
-updated: 2018-01-19T15:59:25.703519-06:00
+hash: 7a3c2fbb36f9744aeec5f8863ecbfca662a1c11a76a69838a92d5fdb1a1c7a09
+updated: 2018-01-20T21:35:24.862506-06:00
 imports:
 - name: github.com/blendlabs/go-exception
   version: 8d6614c6a381fe586fa618174af22043ff966730
+- name: github.com/blendlabs/go-util
+  version: 2da91d26dd94224b78f3a8bae48baf36f920b84a
 - name: github.com/golang/freetype
   version: e2365dfdc4a05e4b8299a783240d4a7d5a65d4e4
   subpackages:
   - raster
   - truetype
 - name: github.com/wcharczuk/go-chart
-  version: fc2973067ce43455507ea5f9aa9814aabbf8f2ca
+  version: f72f7fd57b99907bc56d34b7071656c83dbf0a16
   subpackages:
   - drawing
+  - matrix
+  - roboto
+  - seq
+  - util
 - name: golang.org/x/image
   version: 12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7
   subpackages:

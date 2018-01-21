@@ -9,7 +9,7 @@ main: main.go parse/*.go analyze/*.go
 
 run: main
 	rm -f $(OUTFILE)
-	./main -f $(INPUT) -o $(OUTFILE) -n $(MY_NUMBER) -t messagesPerWeek
+	./main -f $(INPUT) -o $(OUTFILE) -n $(MY_NUMBER) -t messagesTimeOfDay
 	open $(OUTFILE)
 
 clean:

@@ -15,6 +15,10 @@ import (
 const (
 	MMS_FROM_TYPE = 0x89
 	MMS_TO_TYPE   = 0x97
+
+	CONTENT_TEXT = iota
+	CONTENT_IMAGE
+	CONTENT_TEXT_AND_IMAGE
 )
 
 type MMS struct {
@@ -89,4 +93,37 @@ func (mms MMS) Format(f fmt.State, r rune) {
 	}
 
 	fmt.Fprintf(f, "MMS - %v %v %v: %v", mms.ReadableDate, from_or_to, mms.ContactName, data_and_text)
+}
+
+func (mms MMS) GetContentType() int {
+	has_image := false
+	has_text := false
+
+	for _, part := range mms.Parts {
+		if strings.Contains(part.ContentType, "image") {
+			has_image = true
+		} else if strings.Contains(part.ContentType, "text") {
+			has_text = true
+		}
+	}
+
+	if has_image && has_text {
+		return CONTENT_TEXT_AND_IMAGE
+	} else if has_image {
+		return CONTENT_IMAGE
+	} else {
+		return CONTENT_TEXT
+	}
+}
+
+func (mms MMS) GetText() string {
+	for _, part := range mms.Parts {
+		if strings.Contains(part.ContentType, "text") {
+			if part.Text == "null" {
+				return ""
+			}
+			return part.Text
+		}
+	}
+	return ""
 }

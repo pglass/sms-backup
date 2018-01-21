@@ -3,7 +3,6 @@ package analyze
 import (
 	// "fmt"
 	"log"
-	"sort"
 	"time"
 
 	"github.com/pglass/sms-backup/parse"
@@ -19,6 +18,11 @@ type Analyzer struct {
 	MessagesPerWeek         map[time.Time]float64
 	IncomingMessagesPerWeek map[time.Time]float64
 	OutgoingMessagesPerWeek map[time.Time]float64
+
+	IncomingMessageLengths Histogram
+	OutgoingMessageLengths Histogram
+
+	MessagesTimeOfDay map[time.Time]float64
 }
 
 func MakeAnalyzer(doc parse.Document) *Analyzer {
@@ -34,22 +38,57 @@ func (a *Analyzer) Run() {
 	a.IncomingMessagesPerWeek = map[time.Time]float64{}
 	a.OutgoingMessagesPerWeek = map[time.Time]float64{}
 
-	a.countMessages()
+	a.IncomingMessageLengths = MakeHistogram()
+	a.OutgoingMessageLengths = MakeHistogram()
+
+	a.MessagesTimeOfDay = map[time.Time]float64{}
+
+	// a.countMessages()
+	// a.countMessageLengths()
+	a.storeMessagesTimeOfDay()
 }
 
 type Message interface {
 	GetTime() time.Time
 	IsIncoming() bool
+
+	GetContentType() int
+	GetText() string
 }
 
 func (a *Analyzer) countMessages() {
-	// Count the SMS messages
 	for _, sms := range a.doc.SMSes {
 		a.countMessage(sms)
 	}
 	for _, mms := range a.doc.MMSes {
 		a.countMessage(mms)
 	}
+}
+
+func (a *Analyzer) countMessageLengths() {
+	for _, sms := range a.doc.SMSes {
+		a.countMessageLength(sms)
+	}
+	for _, mms := range a.doc.MMSes {
+		a.countMessageLength(mms)
+	}
+}
+
+func (a *Analyzer) storeMessagesTimeOfDay() {
+	for _, sms := range a.doc.SMSes {
+		a.storeMessageTimeOfDay(sms)
+	}
+	for _, mms := range a.doc.MMSes {
+		a.storeMessageTimeOfDay(mms)
+	}
+}
+
+func (a *Analyzer) storeMessageTimeOfDay(msg Message) {
+	t := msg.GetTime()
+
+	hour_as_fraction := float64(t.Hour()) + float64(t.Minute())/60.0
+
+	a.MessagesTimeOfDay[t] = hour_as_fraction
 }
 
 func (a *Analyzer) countMessage(msg Message) {
@@ -75,38 +114,13 @@ func (a *Analyzer) countMessage(msg Message) {
 	}
 }
 
-func PrintSorted(m map[time.Time]float64) {
-	keys := GetSortedKeys(m)
-	for _, k := range keys {
-		log.Printf("%v = %v", k, m[k])
-	}
-}
-
-func GetSortedKeys(m map[time.Time]float64) []time.Time {
-	keys := make([]time.Time, len(m))
-	i := 0
-	for k := range m {
-		keys[i] = k
-		i++
-	}
-	sort.SliceStable(keys, func(i, j int) bool { return keys[i].Unix() < keys[j].Unix() })
-	return keys
-}
-
-// Returns keys, values as two slices
-func SplitMapSorted(m map[time.Time]float64) ([]time.Time, []float64) {
-	keys := GetSortedKeys(m)
-	values := make([]float64, len(m))
-	for i, k := range keys {
-		values[i] = m[k]
-	}
-	return keys, values
-}
-
-func CountKey(m map[time.Time]float64, key time.Time, amount float64) {
-	if count, ok := m[key]; ok {
-		m[key] = count + amount
-	} else {
-		m[key] = amount
+func (a *Analyzer) countMessageLength(msg Message) {
+	switch msg.GetContentType() {
+	case parse.CONTENT_TEXT_AND_IMAGE, parse.CONTENT_TEXT:
+		if msg.IsIncoming() {
+			a.IncomingMessageLengths.Add(int64(len(msg.GetText())))
+		} else {
+			a.OutgoingMessageLengths.Add(int64(len(msg.GetText())))
+		}
 	}
 }
