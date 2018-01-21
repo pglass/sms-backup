@@ -1,0 +1,4 @@
+package: github.com/pglass/sms-backup
+import:
+- package: github.com/wcharczuk/go-chart
+  version: v2.0
