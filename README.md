@@ -4,15 +4,20 @@ Overview
 This is some code to analyze an backup of SMS/MMS messages taken by the SMS
 Backup and Restore app for Android.
 
-What I want to know
+It can analyze a single conversation and output plots for a few different things:
+
+- Time series of messages sent per day
+- Time series of messages sent per week
+- Histogram of incoming message lengths
+- Histogram of outgoing message lengths
+- Scatterplot over time, plotting the hour of day when messages are sent
+
+Other things / TODO
 -------------------
 
-- How many messages sent Each day? Each week? Each month?
-- How does time of day, day of week affect the number of messages sent?
-- How many emojis used?
-- How many pictures sent?
-- Length of texts? Number of exclamations? Number of questions?
+- How many emojis or pictures used?
 - Most common words and phrases
+- Number of exclamations? Number of questions?
 
 Setup
 -----
@@ -41,13 +46,13 @@ This outputs an executable called `main`:
 $ ./main -h
 Usage of ./main:
   -f string
-        The XML file containing your SMS backups
+    	The XML file containing your SMS backups
   -n string
-        My phone number. Used to determine if MMS messages are incoming
+    	My phone number. Used to determine if MMS messages are incoming
   -o string
-        The output image (default "out.png")
+    	The output image (default "out.png")
   -t string
-        One of: messagesPerDay, messagesPerWeek
+    	One of: messagesPerDay, messagesPerWeek, incomingMessageLengths, outgoingMessageLengths, messagesTimeOfDay
 ```
 
 How To
@@ -64,3 +69,5 @@ With the current version (as of 1.20.2018), the backup files are named like
 phone and then downloaded the file to a laptop. The app supports toggles for
 optionally backing up images and emojis - this code supports those backups with
 images and emojis.
+
+See the Makefile for more.

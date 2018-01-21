@@ -46,7 +46,7 @@ func init() {
 	flag.StringVar(&OUTFILE, "o", "out.png", "The output image")
 	flag.StringVar(&MY_NUMBER, "n", "", "My phone number. Used to determine if MMS messages are incoming")
 	flag.StringVar(&CHART_TYPE, "t", "",
-		"One of: messagesPerDay, messagesPerWeek",
+		"One of: messagesPerDay, messagesPerWeek, incomingMessageLengths, outgoingMessageLengths, messagesTimeOfDay",
 	)
 
 	X_AXIS = chart.XAxis{
